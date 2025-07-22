@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #111111;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #111111;
+    --foreground: #ffffff;
+  }
+}
+
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background: linear-gradient(to bottom, #dbeafe 0%, #60a5fa 100%);
+  min-height: 100vh;
+  margin: 0;
+}
+
+button, .transition {
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #e0e7ff;
+}
+::-webkit-scrollbar-thumb {
+  background: #60a5fa;
+  border-radius: 4px;
+}
