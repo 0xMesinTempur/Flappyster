@@ -11,7 +11,6 @@ const navItems = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("Play");
-  const [points, setPoints] = useState(0);
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-b from-blue-200 to-blue-400">
@@ -24,7 +23,6 @@ export default function Home() {
             <button className="bg-blue-600 text-white font-bold px-6 py-2 rounded-lg shadow-lg text-lg hover:bg-blue-700 transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300">Play</button>
           </Link>
         </div>
-        <div className="bg-white/80 px-6 py-2 rounded-full shadow text-blue-800 font-medium text-lg">Poin: {points}</div>
       </header>
 
       {/* Spacer untuk konten tengah jika ingin menambah */}

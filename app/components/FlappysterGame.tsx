@@ -166,14 +166,6 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
       ctx.restore();
     }
 
-    function drawMultilineText(text: string, x: number, y: number, lineHeight: number) {
-      if (!ctx) return;
-      const lines = text.split('\n');
-      lines.forEach((line, index) => {
-        ctx.fillText(line, x, y + (index * lineHeight));
-      });
-    }
-
     function drawOverlay() {}
 
     function checkCollision() {
@@ -270,16 +262,7 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
   }, [score, onScoreChange]);
 
   // State untuk tombol Play Again & Back
-  const [showOverlayButtons, setShowOverlayButtons] = useState(false);
-
-  // Tampilkan tombol setelah game over
-  useEffect(() => {
-    if (gameOver) {
-      setShowOverlayButtons(true);
-    } else {
-      setShowOverlayButtons(false);
-    }
-  }, [gameOver]);
+  // Hapus useEffect terkait showOverlayButtons
 
   return (
     <div className="flex flex-col items-center justify-center w-full h-full select-none relative">
