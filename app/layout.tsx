@@ -1,9 +1,9 @@
-"use client";
 import "./theme.css";
 import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import ClientReady from "./ClientReady";
 import { useEffect } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 
@@ -49,7 +49,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-background">
-        <Providers>{children}</Providers>
+        <Providers>
+          <ClientReady />
+          {children}
+        </Providers>
       </body>
     </html>
   );
