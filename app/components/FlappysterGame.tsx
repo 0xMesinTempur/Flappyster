@@ -375,22 +375,23 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
         width={GAME_WIDTH}
         height={GAME_HEIGHT}
         onClick={handleFlap}
-        className="rounded-2xl shadow-lg border-4 border-blue-300 bg-blue-200 cursor-pointer"
-        style={{ maxWidth: 360, maxHeight: 600, width: "100%", height: "auto" }}
+        className="w-full max-w-[360px] h-auto max-h-[80vh] rounded-2xl shadow-lg border-4 border-blue-300 bg-blue-200 cursor-pointer mx-auto"
+        style={{ display: "block" }}
       />
       {/* Overlay tombol setelah game over */}
       {gameOver && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-          <div className="flex flex-col items-center gap-3 px-8 py-6 bg-white/90 rounded-2xl shadow-xl border border-blue-200">
-            <div className="mb-2 text-xl font-bold text-blue-800">Last Score: {score}</div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-[90vw] max-w-xs">
+          <div className="flex flex-col items-center gap-2 px-4 py-4 bg-white/90 rounded-2xl shadow-xl border border-blue-200">
+            <div className="text-base font-bold text-blue-800">Last Score:</div>
+            <div className="text-2xl font-extrabold text-blue-700 mb-2">{score}</div>
             <button
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 font-semibold text-lg transition mb-2"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 font-semibold text-lg transition mb-2 w-full"
               onClick={resetGame}
             >
               Play Again
             </button>
             <button
-              className="px-6 py-2 bg-white text-blue-700 border border-blue-400 rounded-lg shadow hover:bg-blue-50 font-semibold text-lg transition"
+              className="px-6 py-2 bg-white text-blue-700 border border-blue-400 rounded-lg shadow hover:bg-blue-50 font-semibold text-lg transition w-full"
               onClick={() => router.push("/")}
             >
               Back

@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import ClientReady from "./ClientReady";
+import BottomNavbar from "./components/BottomNavbar";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -47,6 +48,7 @@ export default function RootLayout({
         <Providers>
           <ClientReady />
           {children}
+          <BottomNavbar />
         </Providers>
       </body>
     </html>
