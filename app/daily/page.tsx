@@ -5,7 +5,7 @@ export default function DailyCheckIn() {
   const totalDays = 7;
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-200 to-blue-400 px-2">
+    <main className="min-h-screen flex flex-col items-center justify-center px-2">
       <h1 className="text-3xl font-bold text-blue-800 mb-2">Daily Check-In</h1>
       <p className="text-blue-700 text-base mb-6 text-center max-w-xs">Check in every day to earn rewards! Collect 7 days in a row for a special bonus.</p>
 

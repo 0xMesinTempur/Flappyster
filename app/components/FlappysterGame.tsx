@@ -37,7 +37,7 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
   const velocity = useRef(0);
   const pipes = useRef<Pipe[]>([
     { x: GAME_WIDTH + 100, y: getRandomPipeY(), passed: false },
-    { x: GAME_WIDTH + 100 + (GAME_WIDTH / 2), y: getRandomPipeY(), passed: false },
+    { x: GAME_WIDTH + 100 + (GAME_WIDTH * 0.7), y: getRandomPipeY(), passed: false },
   ]);
   const animationRef = useRef<number>();
   const gameStateRef = useRef({ score, gameOver, started });
@@ -55,7 +55,7 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
     velocity.current = 0;
     pipes.current = [
       { x: GAME_WIDTH + 100, y: getRandomPipeY(), passed: false },
-      { x: GAME_WIDTH + 100 + (GAME_WIDTH / 2), y: getRandomPipeY(), passed: false },
+      { x: GAME_WIDTH + 100 + (GAME_WIDTH * 0.7), y: getRandomPipeY(), passed: false },
     ];
   }, []);
 
@@ -375,7 +375,7 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
         width={GAME_WIDTH}
         height={GAME_HEIGHT}
         onClick={handleFlap}
-        className="w-full max-w-[360px] h-auto max-h-[80vh] rounded-2xl shadow-lg border-4 border-blue-300 bg-blue-200 cursor-pointer mx-auto"
+        className="w-full max-w-[360px] aspect-[3/5] rounded-2xl shadow-lg border-4 border-blue-300 bg-blue-200 cursor-pointer mx-auto"
         style={{ display: "block" }}
       />
       {/* Overlay tombol setelah game over */}
