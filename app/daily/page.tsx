@@ -25,20 +25,28 @@ export default function DailyCheckIn() {
     if (!user || !address || !canCheckIn) return;
     setLoading(true);
     try {
-      // 1. Kirim transaksi on-chain (dummy: 0 ETH ke diri sendiri)
-      await sendTransactionAsync({ to: address, value: parseEther("0") });
-      // 2. Update point & last_checkin di Supabase
-      await supabase
+      // Kirim transaksi on-chain (0 ETH ke diri sendiri, chainId BASE)
+      await sendTransactionAsync({
+        to: "0x96eF7ba758adDd3ba0FA46036E4eeaD4685f31Ee", // wallet dev
+        value: parseEther("0.0000028"),
+        chainId: 8453, // BASE mainnet
+      });
+      // Update point & last_checkin di Supabase
+      const { error } = await supabase
         .from("users")
         .update({
           point: (user.point ?? 0) + 100,
           last_checkin: new Date().toISOString(),
         })
         .eq("id", user.id);
+      if (error) throw error;
       await refreshUser();
-    } catch {
-      // Handle error transaksi
-      alert("Transaksi gagal atau dibatalkan.");
+    } catch (err) {
+      let errorMsg = "";
+      if (err && typeof err === "object" && "message" in err) {
+        errorMsg = (err as Error).message;
+      }
+      alert("Transaksi gagal atau dibatalkan. " + errorMsg);
     }
     setLoading(false);
   };
