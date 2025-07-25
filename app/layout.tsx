@@ -5,6 +5,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import ClientReady from "./ClientReady";
 import BottomNavbar from "./components/BottomNavbar";
+import StarsBackground from "./components/StarsBackground";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -45,6 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-background">
+        <StarsBackground />
         <Providers>
           <ClientReady />
           {children}
