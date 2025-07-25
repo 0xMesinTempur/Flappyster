@@ -8,9 +8,10 @@ import { useState } from "react";
 
 export default function DailyCheckIn() {
   const { user, refreshUser } = useUser();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const [loading, setLoading] = useState(false);
   const { sendTransactionAsync } = useSendTransaction();
+  const [txError, setTxError] = useState("");
 
   // Cek apakah sudah check-in dalam 24 jam terakhir
   const lastCheckin = user?.last_checkin ? dayjs(user.last_checkin) : null;
@@ -24,14 +25,13 @@ export default function DailyCheckIn() {
   const handleCheckIn = async () => {
     if (!user || !address || !canCheckIn) return;
     setLoading(true);
+    setTxError("");
     try {
-      // Kirim transaksi on-chain (0 ETH ke diri sendiri, chainId BASE)
       await sendTransactionAsync({
-        to: "0x96eF7ba758adDd3ba0FA46036E4eeaD4685f31Ee", // wallet dev
+        to: "0x96eF7ba758adDd3ba0FA46036E4eeaD4685f31Ee",
         value: parseEther("0.0000028"),
         chainId: 8453, // BASE mainnet
       });
-      // Update point & last_checkin di Supabase
       const { error } = await supabase
         .from("users")
         .update({
@@ -46,16 +46,32 @@ export default function DailyCheckIn() {
       if (err && typeof err === "object" && "message" in err) {
         errorMsg = (err as Error).message;
       }
+      setTxError(errorMsg);
       alert("Transaksi gagal atau dibatalkan. " + errorMsg);
     }
     setLoading(false);
   };
 
+  // Jika belum connect wallet, tampilkan pesan info
+  if (!isConnected) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center px-2">
+        <div className="w-full max-w-xs p-4 bg-yellow-100 text-yellow-800 rounded text-center">
+          Please connect your wallet on the main page to use this feature.
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-2">
+      {txError && (
+        <div className="mb-4 p-2 bg-red-100 rounded text-xs text-red-700 w-full max-w-xs">
+          Error: {txError}
+        </div>
+      )}
       <h1 className="text-3xl font-bold text-blue-800 mb-2">Daily Check-In</h1>
       <p className="text-blue-700 text-base mb-6 text-center max-w-xs">Check in every day to earn rewards! Collect 7 days in a row for a special bonus.</p>
-
       {/* Progress 7 hari */}
       <div className="flex gap-3 mb-8">
         {[...Array(totalDays)].map((_, i) => (
@@ -69,7 +85,6 @@ export default function DailyCheckIn() {
           </div>
         ))}
       </div>
-
       {/* Tombol Check-In */}
       <button
         className={`w-full max-w-xs px-6 py-3 rounded-xl text-lg font-bold shadow transition
@@ -84,7 +99,6 @@ export default function DailyCheckIn() {
             ? "Check In"
             : "Checked In (wait 24h)"}
       </button>
-
       {/* Hadiah hari ini */}
       <div className="mt-6 flex flex-col items-center">
         <span className="text-2xl">🎁</span>
