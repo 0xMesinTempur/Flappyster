@@ -3,17 +3,48 @@
 import Link from "next/link";
 import { FaCoins } from "react-icons/fa";
 import { Wallet } from "lucide-react";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useEffect } from "react";
 
 export default function Home() {
+  const { address, isConnected } = useAccount();
+  const { connect, connectors, isPending } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  // Auto-connect saat user masuk
+  useEffect(() => {
+    if (!isConnected && connectors.length > 0) {
+      // Coba connect dengan connector pertama (MiniAppWagmiConnector)
+      connect({ connector: connectors[0] });
+    }
+  }, [isConnected, connectors, connect]);
+
+  const handleWalletClick = () => {
+    if (isConnected) {
+      disconnect();
+    } else {
+      connect({ connector: connectors[0] });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center">
       <div className="flex flex-col items-center w-full px-4 pt-10">
         <h1 className="text-6xl md:text-7xl font-extrabold text-white drop-shadow-lg text-center mb-6 mt-2 animate-glow">Flappyster</h1>
         <p className="text-xl md:text-2xl text-blue-100 font-medium text-center mb-8 animate-fade-in">The Ultimate Flying Adventure</p>
         <div className="flex flex-col sm:flex-row gap-4 mb-8 w-full justify-center items-center">
-          <button className="flex items-center gap-2 bg-white/20 text-white font-bold px-6 py-2 rounded-xl shadow-lg hover:bg-white/30 transition text-base backdrop-blur border border-white/30">
+          <button 
+            onClick={handleWalletClick}
+            disabled={isPending}
+            className="flex items-center gap-2 bg-white/20 text-white font-bold px-6 py-2 rounded-xl shadow-lg hover:bg-white/30 transition text-base backdrop-blur border border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Wallet size={20} className="inline-block" />
-            Connect Wallet
+            {isConnected 
+              ? `${address?.slice(0, 6)}...${address?.slice(-4)}`
+              : isPending 
+              ? "Connecting..."
+              : "Connect Wallet"
+            }
           </button>
           <Link href="/flappyster">
             <button className="flex items-center gap-2 bg-blue-200/40 text-blue-900 font-bold px-6 py-2 rounded-xl shadow-lg hover:bg-blue-200/60 transition text-base backdrop-blur border border-blue-100/30">
