@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import FlappysterGame from "../components/FlappysterGame";
 import { useUser } from "../components/UserContext";
 
