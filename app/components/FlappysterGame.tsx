@@ -2,6 +2,8 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/app/components/UserContext";
+import { supabase } from "@/lib/supabaseClient";
 
 // Tambahkan tipe props
 interface FlappysterGameProps {
@@ -31,6 +33,7 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [started, setStarted] = useState(false);
+  const { user, refreshUser } = useUser();
 
   // Game state refs
   const birdY = useRef(GAME_HEIGHT / 2);
@@ -286,7 +289,10 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
       return false;
     }
 
-    function update() {
+    // Tambahkan lastTime untuk deltaTime
+    let lastTime = performance.now();
+
+    function update(deltaTime: number) {
       const currentState = gameStateRef.current;
       
       if (!currentState.started || currentState.gameOver) {
@@ -298,13 +304,13 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
         return;
       }
 
-      // Update physics
-      velocity.current += GRAVITY;
-      birdY.current += velocity.current;
+      // Update physics pakai deltaTime
+      velocity.current += GRAVITY * deltaTime;
+      birdY.current += velocity.current * deltaTime;
 
-      // Update pipes
+      // Update pipes pakai deltaTime
       pipes.current.forEach((pipe) => {
-        pipe.x -= PIPE_SPEED;
+        pipe.x -= PIPE_SPEED * deltaTime;
       });
 
       // Reset pipes that go off screen
@@ -342,12 +348,14 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
       drawOverlay();
     }
 
-    function loop() {
-      update();
+    function loop(now: number) {
+      const deltaTime = Math.min((now - lastTime) / 16.67, 2); // max 2x speed (jika lag)
+      lastTime = now;
+      update(deltaTime);
       animationRef.current = requestAnimationFrame(loop);
     }
 
-    loop();
+    animationRef.current = requestAnimationFrame(loop);
 
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -358,6 +366,26 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
   useEffect(() => {
     if (onScoreChange) onScoreChange(score);
   }, [score, onScoreChange]);
+
+  // Tambahkan efek untuk update point & riwayat skor ke Supabase saat game over
+  useEffect(() => {
+    async function addPointsAndHistory() {
+      if (!user || score <= 0) return;
+      // Update point user (akumulasi)
+      await supabase
+        .from("users")
+        .update({ point: (user.point ?? 0) + score })
+        .eq("id", user.id);
+      // Simpan riwayat skor
+      await supabase.from("scores").insert([{ user_id: user.id, score }]);
+      // Refresh context
+      await refreshUser();
+    }
+    if (gameOver && user && score > 0) {
+      addPointsAndHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameOver]);
 
   // State untuk tombol Play Again & Back
   // Hapus useEffect terkait showOverlayButtons

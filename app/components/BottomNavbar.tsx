@@ -12,6 +12,14 @@ const navItems = [
 export default function BottomNavbar() {
   const pathname = usePathname();
   if (pathname === "/flappyster") return null;
+
+  // Handler untuk suara klik
+  const playClickSound = () => {
+    const audio = new Audio("/click.mp3");
+    audio.currentTime = 0;
+    audio.play();
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 w-full bg-blue-900/40 backdrop-blur-lg border-t border-blue-400/30 flex justify-around items-center py-2 shadow-lg z-50">
       {navItems.map((item) => {
@@ -21,6 +29,7 @@ export default function BottomNavbar() {
           <Link
             key={item.label}
             href={item.href}
+            onClick={playClickSound}
             className={`flex flex-col items-center transition-all duration-200 w-[120px] justify-center
               ${isActive
                 ? "bg-white/30 backdrop-blur rounded-xl px-5 py-2 shadow-md"

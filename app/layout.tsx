@@ -6,6 +6,7 @@ import { Providers } from "./providers";
 import ClientReady from "./ClientReady";
 import BottomNavbar from "./components/BottomNavbar";
 import StarsBackground from "./components/StarsBackground";
+import { UserProvider } from "@/app/components/UserContext";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -48,9 +49,11 @@ export default function RootLayout({
       <body className="bg-background">
         <StarsBackground />
         <Providers>
-          <ClientReady />
-          {children}
-          <BottomNavbar />
+          <UserProvider>
+            <ClientReady />
+            {children}
+            <BottomNavbar />
+          </UserProvider>
         </Providers>
       </body>
     </html>

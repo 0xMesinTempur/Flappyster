@@ -1,8 +1,47 @@
+"use client";
+import { useUser } from "@/app/components/UserContext";
+import { useAccount, useSendTransaction } from "wagmi";
+import { parseEther } from "viem";
+import dayjs from "dayjs";
+import { supabase } from "@/lib/supabaseClient";
+import { useState } from "react";
+
 export default function DailyCheckIn() {
-  // Dummy data: hari ke-3 sudah check-in
-  const checkedInDays = 3;
-  const todayCheckedIn = false;
+  const { user, refreshUser } = useUser();
+  const { address } = useAccount();
+  const [loading, setLoading] = useState(false);
+  const { sendTransactionAsync } = useSendTransaction();
+
+  // Cek apakah sudah check-in dalam 24 jam terakhir
+  const lastCheckin = user?.last_checkin ? dayjs(user.last_checkin) : null;
+  const now = dayjs();
+  const canCheckIn = !lastCheckin || now.diff(lastCheckin, "hour") >= 24;
+
+  // Progress 7 hari (dummy, bisa dihubungkan ke riwayat check-in jika ingin)
+  const checkedInDays = user?.last_checkin ? 1 : 0; // Sementara: 1 jika pernah check-in
   const totalDays = 7;
+
+  const handleCheckIn = async () => {
+    if (!user || !address || !canCheckIn) return;
+    setLoading(true);
+    try {
+      // 1. Kirim transaksi on-chain (dummy: 0 ETH ke diri sendiri)
+      await sendTransactionAsync({ to: address, value: parseEther("0") });
+      // 2. Update point & last_checkin di Supabase
+      await supabase
+        .from("users")
+        .update({
+          point: (user.point ?? 0) + 100,
+          last_checkin: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+      await refreshUser();
+    } catch {
+      // Handle error transaksi
+      alert("Transaksi gagal atau dibatalkan.");
+    }
+    setLoading(false);
+  };
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-2">
@@ -26,17 +65,22 @@ export default function DailyCheckIn() {
       {/* Tombol Check-In */}
       <button
         className={`w-full max-w-xs px-6 py-3 rounded-xl text-lg font-bold shadow transition
-          ${todayCheckedIn ? "bg-blue-200 text-blue-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105"}
+          ${!canCheckIn || loading ? "bg-blue-200 text-blue-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105"}
         `}
-        disabled={todayCheckedIn}
+        disabled={!canCheckIn || loading}
+        onClick={handleCheckIn}
       >
-        {todayCheckedIn ? "Checked In" : "Check In"}
+        {loading
+          ? "Processing..."
+          : canCheckIn
+            ? "Check In"
+            : "Checked In (wait 24h)"}
       </button>
 
       {/* Hadiah hari ini */}
       <div className="mt-6 flex flex-col items-center">
         <span className="text-2xl">🎁</span>
-        <span className="text-blue-700 font-medium mt-1">Today&apos;s Reward: 10 Points</span>
+        <span className="text-blue-700 font-medium mt-1">Today&apos;s Reward: 100 Points</span>
       </div>
     </main>
   );

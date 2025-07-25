@@ -5,11 +5,13 @@ import { FaCoins } from "react-icons/fa";
 import { Wallet } from "lucide-react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useEffect } from "react";
+import { useUser } from "@/app/components/UserContext";
 
 export default function Home() {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
+  const { user, loading } = useUser();
 
   // Auto-connect saat user masuk
   useEffect(() => {
@@ -59,7 +61,9 @@ export default function Home() {
             <FaCoins size={18} className="text-yellow-900" />
           </div>
           <div className="flex flex-col justify-center">
-            <span className="text-xl font-extrabold text-white text-center">12,450</span>
+            <span className="text-xl font-extrabold text-white text-center">
+              {loading ? "..." : user?.point ?? 0}
+            </span>
             <span className="text-blue-100 font-semibold text-sm text-center">Points</span>
           </div>
         </div>
