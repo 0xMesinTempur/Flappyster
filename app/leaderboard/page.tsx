@@ -2,12 +2,18 @@
 import { useUser } from "@/app/components/UserContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Image from "next/image";
 
 interface LeaderboardUser {
   id: string;
   username: string | null;
-  wallet: string;
-  point: number;
+  wallet_address: string;
+  total_points: number;
+  farcaster_profile?: {
+    username: string;
+    displayName: string;
+    avatar: string;
+  } | null;
 }
 
 export default function LeaderboardPage() {
@@ -22,8 +28,8 @@ export default function LeaderboardPage() {
       // Ambil top 50
       const { data: topUsers } = await supabase
         .from("users")
-        .select("id, username, wallet, point")
-        .order("point", { ascending: false })
+        .select("id, username, wallet_address, total_points")
+        .order("total_points", { ascending: false })
         .limit(50);
       setLeaderboard(topUsers || []);
       // Cari ranking user sendiri
@@ -32,7 +38,7 @@ export default function LeaderboardPage() {
         const { data: allUsers } = await supabase
           .from("users")
           .select("id")
-          .order("point", { ascending: false });
+          .order("total_points", { ascending: false });
         const rank = allUsers?.findIndex((u) => u.id === user.id);
         setUserRank(rank !== undefined && rank >= 0 ? rank + 1 : null);
       } else {
@@ -47,9 +53,14 @@ export default function LeaderboardPage() {
   const userSelf: LeaderboardUser | null = user
     ? {
         id: user.id,
-        username: user.username ?? user.wallet,
-        wallet: user.wallet,
-        point: user.point,
+        username: user.username ?? user.wallet_address,
+        wallet_address: user.wallet_address,
+        total_points: user.total_points,
+        farcaster_profile: user.farcaster_profile ? {
+          username: user.farcaster_profile.username,
+          displayName: user.farcaster_profile.displayName,
+          avatar: user.farcaster_profile.avatar,
+        } : null,
       }
     : null;
 
@@ -61,8 +72,21 @@ export default function LeaderboardPage() {
         {userSelf && (
           <div className="flex items-center gap-3 p-3 mb-2 rounded-xl bg-blue-100 border-2 border-blue-400 font-bold text-blue-900">
             <span className="w-8 text-center">{userRank ?? '-'}</span>
-            <span className="flex-1 truncate">{userSelf.username || userSelf.wallet}</span>
-            <span className="font-mono">{userSelf.point}</span>
+            <div className="flex items-center gap-2 flex-1">
+              {userSelf.farcaster_profile?.avatar && (
+                <Image 
+                  src={userSelf.farcaster_profile.avatar} 
+                  alt="Profile" 
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 rounded-full"
+                />
+              )}
+              <span className="truncate">
+                {userSelf.farcaster_profile?.displayName || userSelf.username || userSelf.wallet_address}
+              </span>
+            </div>
+            <span className="font-mono">{userSelf.total_points}</span>
             <span className="ml-2 text-xs text-blue-500">(You)</span>
           </div>
         )}
@@ -77,8 +101,21 @@ export default function LeaderboardPage() {
                 className={`flex items-center gap-3 p-3 ${u.id === userSelf?.id ? "bg-blue-50 font-bold text-blue-700" : ""}`}
               >
                 <span className="w-8 text-center">{i + 1}</span>
-                <span className="flex-1 truncate">{u.username || u.wallet}</span>
-                <span className="font-mono">{u.point}</span>
+                <div className="flex items-center gap-2 flex-1">
+                  {u.farcaster_profile?.avatar && (
+                    <Image 
+                      src={u.farcaster_profile.avatar} 
+                      alt="Profile" 
+                      width={24}
+                      height={24}
+                      className="w-6 h-6 rounded-full"
+                    />
+                  )}
+                  <span className="truncate">
+                    {u.farcaster_profile?.displayName || u.username || u.wallet_address}
+                  </span>
+                </div>
+                <span className="font-mono">{u.total_points}</span>
               </div>
             ))
           )}

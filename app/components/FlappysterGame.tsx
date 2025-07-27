@@ -374,10 +374,14 @@ export default function FlappysterGame({ onScoreChange }: FlappysterGameProps) {
       // Update point user (akumulasi)
       await supabase
         .from("users")
-        .update({ point: (user.point ?? 0) + score })
+        .update({ total_points: (user.total_points ?? 0) + score })
         .eq("id", user.id);
       // Simpan riwayat skor
-      await supabase.from("scores").insert([{ user_id: user.id, score }]);
+      await supabase.from("game_history").insert([{ 
+        wallet_address: user.wallet_address, 
+        points_earned: score,
+        game_type: 'play'
+      }]);
       // Refresh context
       await refreshUser();
     }
