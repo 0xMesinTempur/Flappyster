@@ -6,7 +6,6 @@ import { Wallet } from "lucide-react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useState, useEffect } from "react";
 import { useUser } from "@/app/components/UserContext";
-import FarcasterProfile from "@/app/components/FarcasterProfile";
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -31,14 +30,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center relative">
-      {/* Farcaster Profile - Top Left */}
-      {isClient && isConnected && user && (
-        <div className="absolute top-4 left-4 z-10">
-          <FarcasterProfile />
-        </div>
-      )}
-      
+    <div className="min-h-screen flex flex-col items-center">
       <div className="flex flex-col items-center w-full px-4 pt-10">
         <h1 className="text-6xl md:text-7xl font-extrabold text-white drop-shadow-lg text-center mb-6 mt-2 animate-glow">Flappyster</h1>
         <p className="text-xl md:text-2xl text-blue-100 font-medium text-center mb-8 animate-fade-in">The Ultimate Flying Adventure</p>

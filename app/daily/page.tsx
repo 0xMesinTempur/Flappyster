@@ -11,7 +11,7 @@ export default function DailyCheckIn() {
   const { address, isConnected } = useAccount();
   const [loading, setLoading] = useState(false);
   const [hasCheckedIn, setHasCheckedIn] = useState(false);
-  const { sendTransaction, isPending: isSending } = useSendTransaction();
+  const { sendTransaction, isPending: isSending, data: txData } = useSendTransaction();
   const [txError, setTxError] = useState("");
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
@@ -52,7 +52,7 @@ export default function DailyCheckIn() {
       }
 
       // Send transaction - this will trigger wallet popup
-      sendTransaction({
+      await sendTransaction({
         to: RECIPIENT_ADDRESS as `0x${string}`,
         value: parseEther(TRANSACTION_AMOUNT),
         chainId: BASE_CHAIN_ID,
@@ -75,8 +75,8 @@ export default function DailyCheckIn() {
 
   // Handle successful transaction
   useEffect(() => {
-    if (!isSending && !loading && user && address && hasCheckedIn) {
-      // Only update database if we just sent a transaction
+    if (txData && !isSending && hasCheckedIn && user && address) {
+      // Transaction was successful, update database
       const updateDatabase = async () => {
         try {
           // Check again if user can check in (double check)
@@ -87,6 +87,7 @@ export default function DailyCheckIn() {
           if (!canCheckInNow) {
             setTxError("You've already checked in today!");
             setHasCheckedIn(false);
+            setLoading(false);
             return;
           }
 
@@ -99,6 +100,7 @@ export default function DailyCheckIn() {
           if (updateError) {
             setTxError("Failed to update check-in status");
             setHasCheckedIn(false);
+            setLoading(false);
             return;
           }
 
@@ -111,6 +113,7 @@ export default function DailyCheckIn() {
           if (pointsError) {
             setTxError("Failed to add points");
             setHasCheckedIn(false);
+            setLoading(false);
             return;
           }
 
@@ -124,18 +127,18 @@ export default function DailyCheckIn() {
           // Refresh user data
           await refreshUser();
           setTxError("Daily check-in successful! You earned 100 points.");
+          setLoading(false);
         } catch (err: unknown) {
           const error = err as { message?: string };
           setTxError(`Database update failed: ${error.message || 'Unknown error'}`);
           setHasCheckedIn(false);
-        } finally {
           setLoading(false);
         }
       };
 
       updateDatabase();
     }
-  }, [isSending, loading, user, address, refreshUser, hasCheckedIn]);
+  }, [txData, isSending, hasCheckedIn, user, address, refreshUser]);
 
   // Jika belum connect wallet, tampilkan pesan info
   if (!isConnected) {
