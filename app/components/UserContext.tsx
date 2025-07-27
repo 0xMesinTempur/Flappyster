@@ -2,16 +2,17 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { useAccount } from "wagmi";
 import { supabase } from "@/lib/supabaseClient";
-import { getFarcasterProfileByWallet, FarcasterProfile } from "@/lib/farcasterAuth";
+import { getFarcasterProfileByWallet, FarcasterProfile, FarcasterAuthResult } from "@/lib/farcasterAuth";
 
 interface UserData {
   id: string;
   wallet_address: string;
   total_points: number;
-  last_checkin: string | null;
-  created_at: string;
+  game_type?: string | null;
   username?: string | null;
   farcaster_profile?: FarcasterProfile | null;
+  fid?: number | null;
+  last_checkin?: string | null;
 }
 
 interface UserContextType {
@@ -20,6 +21,8 @@ interface UserContextType {
   error: string | null;
   refreshUser: () => Promise<void>;
   refreshFarcasterProfile: () => Promise<void>;
+  handleFarcasterAuthSuccess: (result: FarcasterAuthResult) => void;
+  handleFarcasterAuthError: (error: string) => void;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -28,6 +31,8 @@ const UserContext = createContext<UserContextType>({
   error: null,
   refreshUser: async () => {},
   refreshFarcasterProfile: async () => {},
+  handleFarcasterAuthSuccess: async () => {},
+  handleFarcasterAuthError: () => {},
 });
 
 export function useUser() {
@@ -68,6 +73,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const handleFarcasterAuthSuccess = (result: FarcasterAuthResult) => {
+    if (!user || !result.profile) return;
+
+    try {
+      // Update user dengan Farcaster profile
+      const updatedUser = {
+        ...user,
+        username: result.profile.username,
+        farcaster_profile: result.profile,
+        fid: result.fid
+      };
+
+      // Note: Tidak bisa update database karena tabel tidak punya kolom username
+      // Tapi kita bisa simpan di state untuk display
+      setUser(updatedUser);
+      setError(null);
+    } catch (error) {
+      console.error('Error handling Farcaster auth success:', error);
+    }
+  };
+
+  const handleFarcasterAuthError = (error: string) => {
+    setError(`Farcaster authentication failed: ${error}`);
+  };
+
   const fetchOrCreateUser = async () => {
     if (!address) {
       setUser(null);
@@ -104,8 +134,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           .insert([{ 
             wallet_address: address,
             total_points: 0,
-            last_checkin: null,
-            username: farcasterProfile?.username || null
+            game_type: null
           }])
           .select()
           .single();
@@ -116,7 +145,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
         } else if (newUser) {
           setUser({
             ...newUser as UserData,
-            farcaster_profile: farcasterProfile
+            farcaster_profile: farcasterProfile,
+            fid: farcasterProfile?.fid || null,
+            username: farcasterProfile?.username || null
           });
           setError(null);
         } else {
@@ -127,31 +158,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
         // Fetch Farcaster profile for existing user
         const farcasterProfile = await fetchFarcasterProfileDebounced(address);
         
-        // Update username if it's null and we have Farcaster profile
-        if (!userData.username && farcasterProfile?.username) {
-          const { error: updateError } = await supabase
-            .from("users")
-            .update({ username: farcasterProfile.username })
-            .eq("id", userData.id);
-          
-          if (!updateError) {
-            setUser({
-              ...userData as UserData,
-              username: farcasterProfile.username,
-              farcaster_profile: farcasterProfile
-            });
-          } else {
-            setUser({
-              ...userData as UserData,
-              farcaster_profile: farcasterProfile
-            });
-          }
-        } else {
-          setUser({
-            ...userData as UserData,
-            farcaster_profile: farcasterProfile
-          });
-        }
+        setUser({
+          ...userData as UserData,
+          farcaster_profile: farcasterProfile,
+          fid: farcasterProfile?.fid || null,
+          username: farcasterProfile?.username || null
+        });
         setError(null);
       }
     } catch (err: unknown) {
@@ -169,31 +181,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     try {
       const profile = await fetchFarcasterProfileDebounced(user.wallet_address);
       
-      // Update username in database if we have Farcaster profile
-      if (profile?.username && user.username !== profile.username) {
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({ username: profile.username })
-          .eq("id", user.id);
-        
-        if (!updateError) {
-          setUser(prev => prev ? { 
-            ...prev, 
-            username: profile.username,
-            farcaster_profile: profile 
-          } : null);
-        } else {
-          setUser(prev => prev ? { 
-            ...prev, 
-            farcaster_profile: profile 
-          } : null);
-        }
-      } else {
-        setUser(prev => prev ? { 
-          ...prev, 
-          farcaster_profile: profile 
-        } : null);
-      }
+      setUser(prev => prev ? { 
+        ...prev, 
+        farcaster_profile: profile,
+        fid: profile?.fid || null,
+        username: profile?.username || null
+      } : null);
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Error refreshing Farcaster profile:', error);
@@ -217,7 +210,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       loading, 
       error, 
       refreshUser: fetchOrCreateUser,
-      refreshFarcasterProfile 
+      refreshFarcasterProfile,
+      handleFarcasterAuthSuccess,
+      handleFarcasterAuthError
     }}>
       {children}
     </UserContext.Provider>

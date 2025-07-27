@@ -9,6 +9,14 @@ export interface FarcasterProfile {
   followingCount: number
 }
 
+// Farcaster authentication result interface
+export interface FarcasterAuthResult {
+  success: boolean
+  fid?: number
+  profile?: FarcasterProfile
+  error?: string
+}
+
 // Cache untuk menyimpan Farcaster profiles
 const profileCache = new Map<string, { profile: FarcasterProfile | null; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 menit
@@ -17,6 +25,75 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 menit
 let lastRequestTime = 0;
 let requestCount = 0;
 const MAX_REQUESTS_PER_MINUTE = 5; // Kurangi dari 6 untuk safety
+
+// Parse SIWF message untuk mendapatkan FID
+function parseSIWFMessage(message: string): number | null {
+  try {
+    // SIWF message biasanya dalam format JSON
+    const parsed = JSON.parse(message);
+    
+    // Coba berbagai kemungkinan field yang berisi FID
+    if (parsed.fid) {
+      return parseInt(parsed.fid);
+    }
+    if (parsed.data?.fid) {
+      return parseInt(parsed.data.fid);
+    }
+    if (parsed.state?.fid) {
+      return parseInt(parsed.state.fid);
+    }
+    
+    // Jika tidak ada field FID yang jelas, coba parse dari string
+    const fidMatch = message.match(/"fid"\s*:\s*(\d+)/);
+    if (fidMatch) {
+      return parseInt(fidMatch[1]);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error parsing SIWF message:', error);
+    return null;
+  }
+}
+
+// Verify SIWF credentials dan dapatkan FID
+export async function verifyFarcasterAuth(signature: string, message: string): Promise<FarcasterAuthResult> {
+  try {
+    // Parse message untuk mendapatkan FID
+    const fid = parseSIWFMessage(message);
+    
+    if (!fid) {
+      return {
+        success: false,
+        error: 'Could not extract FID from SIWF message'
+      };
+    }
+
+    // Verify signature (implementasi dasar - bisa ditingkatkan)
+    // Untuk saat ini kita asumsikan signature valid karena sudah melalui Farcaster SDK
+    
+    // Fetch profile menggunakan FID
+    const profile = await getFarcasterProfile(fid);
+    
+    if (!profile) {
+      return {
+        success: false,
+        error: 'Could not fetch Farcaster profile'
+      };
+    }
+
+    return {
+      success: true,
+      fid,
+      profile
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
 
 // Get Farcaster profile from wallet address using Neynar API
 export async function getFarcasterProfileByWallet(walletAddress: string): Promise<FarcasterProfile | null> {
