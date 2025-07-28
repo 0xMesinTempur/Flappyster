@@ -25,9 +25,21 @@ export const supabase = createClient(
 export interface User {
   id: string;
   wallet_address: string;
-  points_earned: number;
-  game_type?: string | null;
+  total_points: number;
   username?: string | null;
+  fid?: number | null;
+  display_name?: string | null;
+  farcaster_profile?: {
+    fid: number;
+    username: string;
+    displayName: string;
+    avatar: string;
+    bio?: string;
+    followers?: number;
+    following?: number;
+  } | null;
+  last_checkin?: string | null;
+  created_at?: string | null;
 }
 
 export interface GameHistory {

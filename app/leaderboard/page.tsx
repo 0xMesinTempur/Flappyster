@@ -125,153 +125,185 @@ export default function LeaderboardPage() {
     return <Star className="w-4 h-4 text-blue-400" />;
   };
 
+  // Get display name for user
+  const getDisplayName = (userData: LeaderboardUser) => {
+    if (userData.farcaster_profile?.displayName) {
+      return userData.farcaster_profile.displayName;
+    }
+    if (userData.farcaster_profile?.username) {
+      return `@${userData.farcaster_profile.username}`;
+    }
+    if (userData.username) {
+      return userData.username;
+    }
+    return "Anonymous";
+  };
+
+  // Get username for display
+  const getUsername = (userData: LeaderboardUser) => {
+    if (userData.farcaster_profile?.username) {
+      return `@${userData.farcaster_profile.username}`;
+    }
+    if (userData.username) {
+      return userData.username;
+    }
+    return "user";
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Trophy className="w-8 h-8 text-yellow-500" />
-            <h1 className="text-4xl font-bold text-white drop-shadow-lg">
-              Leaderboard
-            </h1>
-            <Trophy className="w-8 h-8 text-yellow-500" />
-          </div>
-          <p className="text-blue-100 text-lg">Top Players of Flappyster</p>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="max-w-md mx-auto mb-6">
-            <div className="bg-red-500/20 border border-red-300/30 rounded-lg px-4 py-3">
-              <div className="text-red-100 font-medium">Error</div>
-              <div className="text-red-200 text-sm">{error}</div>
+    <div className="h-screen bg-background flex flex-col">
+      {/* Header - Fixed at top */}
+      <div className="flex-shrink-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm border-b border-white/20">
+        <div className="container mx-auto px-4 py-4">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Trophy className="w-6 h-6 text-yellow-500" />
+              <h1 className="text-2xl font-bold text-white drop-shadow-lg">
+                Leaderboard
+              </h1>
+              <Trophy className="w-6 h-6 text-yellow-500" />
             </div>
+            <p className="text-blue-100 text-sm">Top Players of Flappyster</p>
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* User's Current Rank */}
-        {userSelf && userRank && (
-          <div className="max-w-md mx-auto mb-6">
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/30">
-              <div className="flex items-center justify-between text-white">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <span className="font-bold text-lg">{userRank}</span>
-                  </div>
-                  <div>
-                    <div className="font-semibold">
-                      {userSelf.farcaster_profile?.displayName || userSelf.username || "Anonymous"}
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-4">
+          {/* Error Message */}
+          {error && (
+            <div className="max-w-md mx-auto mb-4">
+              <div className="bg-red-500/20 border border-red-300/30 rounded-lg px-4 py-3">
+                <div className="text-red-100 font-medium">Error</div>
+                <div className="text-red-200 text-sm">{error}</div>
+              </div>
+            </div>
+          )}
+
+          {/* User's Current Rank */}
+          {userSelf && userRank && (
+            <div className="max-w-md mx-auto mb-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/30">
+                <div className="flex items-center justify-between text-white">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                      <span className="font-bold text-lg">{userRank}</span>
                     </div>
-                    <div className="text-sm opacity-90">
-                      @{userSelf.farcaster_profile?.username || "user"}
+                    <div>
+                      <div className="font-semibold">
+                        {getDisplayName(userSelf)}
+                      </div>
+                      <div className="text-sm opacity-90">
+                        {getUsername(userSelf)}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">{userSelf.total_points}</div>
-                  <div className="text-sm opacity-90">points</div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">{userSelf.total_points}</div>
+                    <div className="text-sm opacity-90">points</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Leaderboard */}
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white/20 backdrop-blur-sm rounded-3xl shadow-xl border border-white/30 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-4">
-              <div className="flex items-center justify-between font-semibold">
-                <span>Rank</span>
-                <span>Player</span>
-                <span>Points</span>
+          {/* Leaderboard */}
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white/20 backdrop-blur-sm rounded-3xl shadow-xl border border-white/30 overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-4">
+                <div className="flex items-center justify-between font-semibold">
+                  <span>Rank</span>
+                  <span>Player</span>
+                  <span>Points</span>
+                </div>
+              </div>
+
+              {/* Leaderboard List */}
+              <div className="max-h-80 overflow-y-auto">
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    <span className="ml-3 text-white">Loading leaderboard...</span>
+                  </div>
+                ) : (
+                  leaderboard.map((u, i) => {
+                    const rank = i + 1;
+                    const isCurrentUser = u.id === userSelf?.id;
+                    
+                    return (
+                      <div
+                        key={u.id}
+                        className={`flex items-center gap-4 px-6 py-4 border-b border-white/20 hover:bg-white/10 transition-all duration-200 ${
+                          isCurrentUser ? 'bg-blue-500/20 border-l-4 border-l-blue-400' : ''
+                        }`}
+                      >
+                        {/* Rank */}
+                        <div className="flex items-center gap-2 w-12">
+                          {rank <= 3 ? (
+                            getRankIcon(rank)
+                          ) : (
+                            <span className="text-white font-semibold">{rank}</span>
+                          )}
+                        </div>
+
+                        {/* Player Info */}
+                        <div className="flex items-center gap-3 flex-1">
+                          {u.farcaster_profile?.avatar ? (
+                            <Image 
+                              src={u.farcaster_profile.avatar} 
+                              alt="Profile" 
+                              width={32}
+                              height={32}
+                              className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold">
+                              {getDisplayName(u).charAt(0)}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-white truncate">
+                              {getDisplayName(u)}
+                            </div>
+                            <div className="text-sm text-blue-100 truncate">
+                              {getUsername(u)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Points */}
+                        <div className="text-right">
+                          <div className="font-bold text-lg text-white">
+                            {u.total_points.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-blue-100">points</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="bg-white/10 px-6 py-3 text-center">
+                <p className="text-sm text-blue-100">
+                  Showing top {leaderboard.length} players
+                </p>
               </div>
             </div>
-
-            {/* Leaderboard List */}
-            <div className="max-h-96 overflow-y-auto">
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                  <span className="ml-3 text-white">Loading leaderboard...</span>
-                </div>
-              ) : (
-                leaderboard.map((u, i) => {
-                  const rank = i + 1;
-                  const isCurrentUser = u.id === userSelf?.id;
-                  
-                  return (
-                    <div
-                      key={u.id}
-                      className={`flex items-center gap-4 px-6 py-4 border-b border-white/20 hover:bg-white/10 transition-all duration-200 ${
-                        isCurrentUser ? 'bg-blue-500/20 border-l-4 border-l-blue-400' : ''
-                      }`}
-                    >
-                      {/* Rank */}
-                      <div className="flex items-center gap-2 w-12">
-                        {rank <= 3 ? (
-                          getRankIcon(rank)
-                        ) : (
-                          <span className="text-white font-semibold">{rank}</span>
-                        )}
-                      </div>
-
-                      {/* Player Info */}
-                      <div className="flex items-center gap-3 flex-1">
-                        {u.farcaster_profile?.avatar ? (
-                          <Image 
-                            src={u.farcaster_profile.avatar} 
-                            alt="Profile" 
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold">
-                            {u.farcaster_profile?.displayName?.charAt(0) || u.username?.charAt(0) || '?'}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-white truncate">
-                            {u.farcaster_profile?.displayName || u.username || "Anonymous"}
-                          </div>
-                          <div className="text-sm text-blue-100 truncate">
-                            @{u.farcaster_profile?.username || "user"}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Points */}
-                      <div className="text-right">
-                        <div className="font-bold text-lg text-white">
-                          {u.total_points.toLocaleString()}
-                        </div>
-                        <div className="text-xs text-blue-100">points</div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="bg-white/10 px-6 py-3 text-center">
-              <p className="text-sm text-blue-100">
-                Showing top {leaderboard.length} players
-              </p>
-            </div>
           </div>
+
+          {/* Empty State */}
+          {!loading && leaderboard.length === 0 && !error && (
+            <div className="text-center py-8">
+              <Trophy className="w-16 h-16 text-white/50 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">No Players Yet</h3>
+              <p className="text-blue-100">Be the first to play and claim the top spot!</p>
+            </div>
+          )}
         </div>
-
-        {/* Empty State */}
-        {!loading && leaderboard.length === 0 && !error && (
-          <div className="text-center py-12">
-            <Trophy className="w-16 h-16 text-white/50 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No Players Yet</h3>
-            <p className="text-blue-100">Be the first to play and claim the top spot!</p>
-          </div>
-        )}
       </div>
     </div>
   );

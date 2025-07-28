@@ -1,7 +1,6 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { useAccount } from "wagmi";
-import { supabase } from "@/lib/supabaseClient";
 import { getFarcasterProfileByWallet, FarcasterProfile, FarcasterAuthResult } from "@/lib/farcasterAuth";
 
 interface UserData {
@@ -20,6 +19,7 @@ interface UserContextType {
   loading: boolean;
   error: string | null;
   refreshUser: () => Promise<void>;
+  fetchOrCreateUser: (walletAddress: string) => Promise<void>;
   refreshFarcasterProfile: () => Promise<void>;
   handleFarcasterAuthSuccess: (result: FarcasterAuthResult) => void;
   handleFarcasterAuthError: (error: string) => void;
@@ -30,6 +30,7 @@ const UserContext = createContext<UserContextType>({
   loading: false,
   error: null,
   refreshUser: async () => {},
+  fetchOrCreateUser: async () => {},
   refreshFarcasterProfile: async () => {},
   handleFarcasterAuthSuccess: async () => {},
   handleFarcasterAuthError: () => {},
@@ -98,8 +99,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setError(`Farcaster authentication failed: ${error}`);
   };
 
-  const fetchOrCreateUser = async () => {
-    if (!address) {
+  const fetchOrCreateUser = async (walletAddress: string) => {
+    if (!walletAddress) {
       setUser(null);
       setError(null);
       return;
@@ -109,62 +110,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      // Check if user exists
-      const { data: userData, error: queryError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("wallet_address", address)
-        .single();
-      
-      if (queryError && queryError.code !== 'PGRST116') { // PGRST116 = no rows returned
-        setError(`Database error: ${queryError.message}`);
+      // Use the new auth validation endpoint
+      const response = await fetch('/api/auth/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wallet_address: address,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(`Authentication failed: ${errorData.error || 'Unknown error'}`);
         setUser(null);
         setLoading(false);
         return;
       }
+
+      const { success, user: userData } = await response.json();
       
-      if (!userData) {
-        // Create new user if doesn't exist
-        
-        // Fetch Farcaster profile first
-        const farcasterProfile = await fetchFarcasterProfileDebounced(address);
-        
-        const { data: newUser, error: insertError } = await supabase
-          .from("users")
-          .insert([{ 
-            wallet_address: address,
-            total_points: 0,
-            game_type: null
-          }])
-          .select()
-          .single();
-        
-        if (insertError) {
-          setError(`Failed to create user: ${insertError.message}`);
-          setUser(null);
-        } else if (newUser) {
-          setUser({
-            ...newUser as UserData,
-            farcaster_profile: farcasterProfile,
-            fid: farcasterProfile?.fid || null,
-            username: farcasterProfile?.username || null
-          });
-          setError(null);
-        } else {
-          setError("Failed to create user");
-          setUser(null);
-        }
-      } else {
-        // Fetch Farcaster profile for existing user
-        const farcasterProfile = await fetchFarcasterProfileDebounced(address);
-        
-        setUser({
-          ...userData as UserData,
-          farcaster_profile: farcasterProfile,
-          fid: farcasterProfile?.fid || null,
-          username: farcasterProfile?.username || null
-        });
+      if (success && userData) {
+        setUser(userData as UserData);
         setError(null);
+      } else {
+        setError("Failed to authenticate user");
+        setUser(null);
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -196,7 +168,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isConnected && address) {
-      fetchOrCreateUser();
+      fetchOrCreateUser(address);
     } else {
       setUser(null);
       setError(null);
@@ -209,7 +181,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       user, 
       loading, 
       error, 
-      refreshUser: fetchOrCreateUser,
+      refreshUser: () => fetchOrCreateUser(address || ''),
+      fetchOrCreateUser,
       refreshFarcasterProfile,
       handleFarcasterAuthSuccess,
       handleFarcasterAuthError

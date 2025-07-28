@@ -14,21 +14,34 @@ export default function FarcasterAuth({ onAuthSuccess, onAuthError }: FarcasterA
   const handleAuth = async () => {
     setLoading(true);
     try {
-      // For now, we'll use a simple approach to fetch Farcaster profile
-      // This will be replaced with proper SIWF implementation later
-      const response = await fetch('/api/farcaster/profile?wallet_address=' + encodeURIComponent(window.ethereum?.selectedAddress || ''));
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch Farcaster profile');
+      // Use the new auth validation endpoint
+      const walletAddress = window.ethereum?.selectedAddress;
+      if (!walletAddress) {
+        throw new Error('No wallet connected');
       }
+
+      const response = await fetch('/api/auth/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wallet_address: walletAddress,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Authentication failed');
+      }
+
+      const { success, user } = await response.json();
       
-      const profileData = await response.json();
-      
-      if (profileData.success && profileData.profile) {
+      if (success && user && user.farcaster_profile) {
         onAuthSuccess({
           success: true,
-          fid: profileData.profile.fid,
-          profile: profileData.profile
+          fid: user.fid,
+          profile: user.farcaster_profile
         });
       } else {
         throw new Error('No Farcaster profile found for this wallet');
